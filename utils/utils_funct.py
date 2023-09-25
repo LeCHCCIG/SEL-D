@@ -2,6 +2,40 @@
 import numpy as np
 import librosa
 
+# Hyper-parameters
+################# Model #################
+Model_SED = 'CRNN10'            # 'CRNN10' | 'VGG9'
+Model_DOA = 'pretrained_CRNN10'  # 'pretrained_CRNN10' | 'pretrained_VGG9'
+model_pool_type = 'avg'         # 'max' | 'avg'
+model_pool_size = (2, 2)
+model_interp_ratio = 16
+
+loss_type = 'MAE'
+################# param #################
+batch_size = 32
+Max_epochs = 50
+lr = 1e-3
+weight_decay = 0
+threshold = {'sed': 0.3}
+
+fs = 32000
+nfft = 1024
+hopsize = 320  # 640 for 20 ms
+mel_bins = 96
+window = 'hann'
+fmin = 50
+frames_per_1s = fs // hopsize
+sub_frames_per_1s = 50
+chunklen = int(2 * frames_per_1s)
+hopframes = int(0.5 * frames_per_1s)
+
+hdf5_folder_name = '{}fs_{}nfft_{}hs_{}melb'.format(
+    fs, nfft, hopsize, mel_bins)
+################# batch intervals for save & lr update #################
+save_interval = 2000
+lr_interval = 2000
+########################################################################
+
 
 melW = librosa.filters.mel(sr=fs,
                            n_fft=nfft,

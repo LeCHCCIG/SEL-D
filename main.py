@@ -426,7 +426,7 @@ def testaudio(args, data_generator, logging):
     output['doas'] = to_np(output['doas'])
 
     # Specify the file path where you want to save the CSV file
-    csv_file_path = f"/Users/kehindeelelu/Documents/Research/SELD/output"
+    csv_file_path = f"/Users/kehindeelelu/Documents/Research/SELD/output/"
 
     with open(f'{csv_file_path}/events.csv', 'w', newline='') as csv_file:
         writer = csv.writer(csv_file)

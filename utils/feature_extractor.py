@@ -17,11 +17,18 @@ from utilities import calculate_scalar, event_labels, lb_to_ix
 
 fs = 32000
 nfft = 1024
-hopsize = 320 # 640 for 20 ms
+hopsize = 320  # 640 for 20 ms
 mel_bins = 96
 window = 'hann'
 fmin = 50
-hdf5_folder_name = '{}fs_{}nfft_{}hs_{}melb'.format(fs, nfft, hopsize, mel_bins)
+hdf5_folder_name = '{}fs_{}nfft_{}hs_{}melb'.format(
+    fs, nfft, hopsize, mel_bins)
+
+event_labels = ['crane', 'piledriver', 'saw', 'excavator',
+                'pneumaticbreaker', 'concretepumper', 'forklift']
+
+lb_to_ix = {lb: i for i, lb in enumerate(event_labels)}
+ix_to_lb = {i: lb for i, lb in enumerate(event_labels)}
 
 
 class LogMelExtractor():
@@ -49,7 +56,8 @@ class LogMelExtractor():
                                     pad_mode='reflect'))**2
 
             S_mel = np.dot(self.melW, S).T
-            S_logmel = librosa.power_to_db(S_mel, ref=1.0, amin=1e-10, top_db=None)
+            S_logmel = librosa.power_to_db(
+                S_mel, ref=1.0, amin=1e-10, top_db=None)
             S_logmel = np.expand_dims(S_logmel, axis=0)
             feature_logmel.append(S_logmel)
 
@@ -76,7 +84,7 @@ class LogMelGccExtractor():
                                 hop_length=self.hopsize,
                                 center=True,
                                 window=self.window,
-                                pad_mode='reflect'))**2        
+                                pad_mode='reflect'))**2
         S_mel = np.dot(self.melW, S).T
         S_logmel = librosa.power_to_db(S_mel, ref=1.0, amin=1e-10, top_db=None)
         S_logmel = np.expand_dims(S_logmel, axis=0)
@@ -88,18 +96,18 @@ class LogMelGccExtractor():
         ncorr = 2*self.nfft - 1
         nfft = int(2**np.ceil(np.log2(np.abs(ncorr))))
         Px = librosa.stft(y=sig,
-                        n_fft=nfft,
-                        hop_length=self.hopsize,
-                        center=True,
-                        window=self.window, 
-                        pad_mode='reflect')
+                          n_fft=nfft,
+                          hop_length=self.hopsize,
+                          center=True,
+                          window=self.window,
+                          pad_mode='reflect')
         Px_ref = librosa.stft(y=refsig,
-                            n_fft=nfft,
-                            hop_length=self.hopsize,
-                            center=True,
-                            window=self.window,
-                            pad_mode='reflect')
-    
+                              n_fft=nfft,
+                              hop_length=self.hopsize,
+                              center=True,
+                              window=self.window,
+                              pad_mode='reflect')
+
         R = Px*np.conj(Px_ref)
 
         n_frames = R.shape[1]
@@ -110,7 +118,7 @@ class LogMelGccExtractor():
             cc = np.concatenate((cc[-mel_bins//2:], cc[:mel_bins//2]))
             gcc_phat.append(cc)
         gcc_phat = np.array(gcc_phat)
-        gcc_phat = gcc_phat[None,:,:]
+        gcc_phat = gcc_phat[None, :, :]
 
         return gcc_phat
 
@@ -121,10 +129,10 @@ class LogMelGccExtractor():
         feature_gcc_phat = []
         for n in range(channel_num):
             feature_logmel.append(self.logmel(audio[n]))
-            for m in range(n+1,channel_num):
+            for m in range(n+1, channel_num):
                 feature_gcc_phat.append(
                     self.gcc_phat(sig=audio[m], refsig=audio[n]))
-        
+
         feature_logmel = np.concatenate(feature_logmel, axis=0)
         feature_gcc_phat = np.concatenate(feature_gcc_phat, axis=0)
         feature = np.concatenate([feature_logmel, feature_gcc_phat])
@@ -135,25 +143,26 @@ class LogMelGccExtractor():
 def RT_preprocessing(audio, feature_type):
 
     if feature_type == 'logmel':
-        extractor = LogMelExtractor(fs=fs, 
-                                    nfft=nfft,
-                                    hopsize=hopsize,
-                                    mel_bins=mel_bins,
-                                    window=window,
-                                    fmin=fmin)  
-    elif feature_type == 'logmelgcc':
-        extractor = LogMelGccExtractor(fs=fs, 
+        extractor = LogMelExtractor(fs=fs,
                                     nfft=nfft,
                                     hopsize=hopsize,
                                     mel_bins=mel_bins,
                                     window=window,
                                     fmin=fmin)
+    elif feature_type == 'logmelgcc':
+        extractor = LogMelGccExtractor(fs=fs,
+                                       nfft=nfft,
+                                       hopsize=hopsize,
+                                       mel_bins=mel_bins,
+                                       window=window,
+                                       fmin=fmin)
 
     feature = extractor.transform(audio)
     '''(channels, seq_len, mel_bins)'''
     '''(channels, time, frequency)'''
 
     return feature
+
 
 def extract_features(args):
     """
@@ -167,8 +176,11 @@ def extract_features(args):
     """
 
     # Path
-    audio_dir = os.path.join(args.dataset_dir, args.audio_type + '_' + args.data_type)
+    audio_dir = os.path.join(
+        args.dataset_dir, args.audio_type + '_' + args.data_type)
     meta_dir = os.path.join(args.dataset_dir, 'metadata_' + args.data_type)
+
+    print(audio_dir)
 
     if args.data_type == 'dev':
         hdf5_dir = os.path.join(args.feature_dir, args.feature_type,
@@ -176,7 +188,7 @@ def extract_features(args):
 
     elif args.data_type == 'eval':
         hdf5_dir = os.path.join(args.feature_dir, args.feature_type,
-                        hdf5_folder_name, args.audio_type + '_eval/')
+                                hdf5_folder_name, args.audio_type + '_eval/')
 
     else:
         raise Exception('Wrong data type input.')
@@ -187,8 +199,9 @@ def extract_features(args):
     audio_count = 0
 
     print('\n============> Start Extracting Features\n')
-    
-    iterator = tqdm(sorted(os.listdir(audio_dir)), total=len(os.listdir(audio_dir)), unit='it')
+
+    iterator = tqdm(sorted(os.listdir(audio_dir)),
+                    total=len(os.listdir(audio_dir)), unit='it')
 
     for audio_fn in iterator:
 
@@ -197,21 +210,23 @@ def extract_features(args):
             fn = audio_fn.split('.')[0]
             audio_path = os.path.join(audio_dir, audio_fn)
 
-            audio, _ = librosa.load(audio_path, sr=fs, mono=False, dtype=np.float32)
+            audio, _ = librosa.load(
+                audio_path, sr=fs, mono=False, dtype=np.float32)
             '''(channel_nums, samples)'''
             audio_count += 1
 
             if np.sum(np.abs(audio)) < len(audio)*1e-4:
                 with open("feature_removed.txt", "a+") as text_file:
                     # print("Purchase Amount: {}".format(TotalAmount), file=text_file)
-                    print(f"Silent file removed in feature extractor: {audio_fn}", 
-                        file=text_file)
-                    tqdm.write("Silent file removed in feature extractor: {}".format(audio_fn))
+                    print(f"Silent file removed in feature extractor: {audio_fn}",
+                          file=text_file)
+                    tqdm.write(
+                        "Silent file removed in feature extractor: {}".format(audio_fn))
                 continue
 
             # features
             feature = RT_preprocessing(audio, args.feature_type)
-            '''(channels, time, frequency)'''               
+            '''(channels, time, frequency)'''
 
             if args.data_type == 'dev':
 
@@ -223,7 +238,7 @@ def extract_features(args):
                 target_end_time = df['end_time'].values
                 target_ele = df['ele'].values
                 target_azi = df['azi'].values
-                target_dist = df['dist'].values
+                # target_dist = df['dist'].values
 
             elif args.data_type == 'eval':
                 raise Exception('Leave for further editing')
@@ -235,19 +250,26 @@ def extract_features(args):
                 # hf.create_dataset('filename', data=[na.encode() for na in [fn]], dtype='S20')
 
                 if args.data_type == 'dev':
-                    
-                    hf.create_group('target')
-                    hf['target'].create_dataset('event', data=[e.encode() for e in target_event], dtype='S20')
-                    hf['target'].create_dataset('start_time', data=target_start_time, dtype=np.float32)
-                    hf['target'].create_dataset('end_time', data=target_end_time, dtype=np.float32)
-                    hf['target'].create_dataset('elevation', data=target_ele, dtype=np.float32)
-                    hf['target'].create_dataset('azimuth', data=target_azi, dtype=np.float32)
-                    hf['target'].create_dataset('distance', data=target_dist, dtype=np.float32)    
 
-            tqdm.write('{}, {}, {}'.format(audio_count, hdf5_path, feature.shape))
-    
+                    hf.create_group('target')
+                    hf['target'].create_dataset(
+                        'event', data=[e.encode() for e in target_event], dtype='S20')
+                    hf['target'].create_dataset(
+                        'start_time', data=target_start_time, dtype=np.float32)
+                    hf['target'].create_dataset(
+                        'end_time', data=target_end_time, dtype=np.float32)
+                    hf['target'].create_dataset(
+                        'elevation', data=target_ele, dtype=np.float32)
+                    hf['target'].create_dataset(
+                        'azimuth', data=target_azi, dtype=np.float32)
+                    # hf['target'].create_dataset('distance', data=target_dist, dtype=np.float32)
+
+            tqdm.write('{}, {}, {}'.format(
+                audio_count, hdf5_path, feature.shape))
+
     iterator.close()
-    print("Extacting feature finished! Time spent: {:.3f} s".format(timer() - begin_time))
+    print("Extacting feature finished! Time spent: {:.3f} s".format(
+        timer() - begin_time))
 
 
 def fit(args):
@@ -259,17 +281,17 @@ def fit(args):
         data_type: 'dev' | 'eval'
         audio_type: 'foa' | 'mic'
     """
-    
+
     if args.data_type == 'dev':
         hdf5_dir = os.path.join(args.feature_dir, args.feature_type,
                                 hdf5_folder_name, args.audio_type + '_dev/')
 
     elif args.data_type == 'eval':
         hdf5_dir = os.path.join(args.feature_dir, args.feature_type,
-                            hdf5_folder_name, args.audio_type + '_eval/')    
+                                hdf5_folder_name, args.audio_type + '_eval/')
 
     scalar_path = os.path.join(args.feature_dir, args.feature_type,
-                            hdf5_folder_name, args.audio_type + '_scalar.h5')
+                               hdf5_folder_name, args.audio_type + '_scalar.h5')
 
     os.makedirs(os.path.dirname(scalar_path), exist_ok=True)
 
@@ -296,18 +318,39 @@ def fit(args):
     print('Write out scalar to {}'.format(scalar_path))
 
 
+def calculate_scalar(features):
+
+    mean = []
+    std = []
+
+    channels = features.shape[0]
+    for channel in range(channels):
+        feat = features[channel, :, :]
+        mean.append(np.mean(feat, axis=0))
+        std.append(np.std(feat, axis=0))
+
+    mean = np.array(mean)
+    std = np.array(std)
+    mean = np.expand_dims(mean, axis=0)
+    std = np.expand_dims(std, axis=0)
+    mean = np.expand_dims(mean, axis=2)
+    std = np.expand_dims(std, axis=2)
+
+    return mean, std
+
+
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Extract features from audio file')
+    parser = argparse.ArgumentParser(
+        description='Extract features from audio file')
 
     parser.add_argument('--dataset_dir', type=str, required=True)
     parser.add_argument('--feature_dir', type=str, required=True)
     parser.add_argument('--feature_type', type=str, required=True,
-                                choices=['logmel', 'logmelgcc'])   
-    parser.add_argument('--data_type', type=str, required=True, 
-                                choices=['dev', 'eval'])
+                        choices=['logmel', 'logmelgcc'])
+    parser.add_argument('--data_type', type=str, required=True,
+                        choices=['dev', 'eval'])
     parser.add_argument('--audio_type', type=str, required=True,
-                                choices=['foa', 'mic'])
-                             
+                        choices=['foa', 'mic'])
 
     args = parser.parse_args()
 
