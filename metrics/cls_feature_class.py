@@ -57,17 +57,13 @@ class FeatureClass:
         self._unique_classes = dict()
         self._unique_classes = \
             {
-                'clearthroat': 2,
-                'cough': 8,
-                'doorslam': 9,
-                'drawer': 1,
-                'keyboard': 6,
-                'keysDrop': 4,
-                'knock': 0,
-                'laughter': 10,
-                'pageturn': 7,
-                'phone': 3,
-                'speech': 5
+                'crane': 0,
+                'piledriver': 1,
+                'saw': 2,
+                'excavator': 3,
+                'pneumaticbreaker': 4,
+                'concretepumper': 5,
+                'forklift': 6
             }
 
         self._doa_resolution = 10
@@ -232,6 +228,9 @@ class FeatureClass:
             _tmp_ele = _desc_file['ele'][_ind]
             _tmp_end = self._max_frames if _desc_file['end'][_ind] > self._max_frames else _desc_file['end'][_ind]
             _tmp_ind = self.get_list_index(_tmp_azi, _tmp_ele)
+            if _tmp_ind >= 324:
+                _tmp_ind = 320
+            # print(_tmp_ind)
             _labels[_start_frame:_tmp_end + 1, _tmp_class, _tmp_ind] = 1
 
         return _labels
