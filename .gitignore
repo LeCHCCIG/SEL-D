@@ -1,0 +1,9 @@
+output/
+dataset_root/
+logs/
+appendixes/
+runs/
+**/__pycache__/
+*.png
+*.wav
+*.csv
