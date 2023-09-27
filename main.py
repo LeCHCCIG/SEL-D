@@ -29,10 +29,12 @@ from utils.utilities import (create_logging, doa_labels, event_labels,
                              print_evaluation, to_torch, to_np, get_doas)
 
 # from utils.feature_extractor import LogMelGccExtractor
+from utils.utils_funct import (transform, transforms, calculate_scalar)
+from evaluation import calculate_submission, write_submission
 
 import pyaudio
 import wave
-from utils.utils_funct import (transform, transforms, calculate_scalar)
+from datetime import datetime
 
 RESPEAKER_RATE = 16000
 # change base on firmwares, default_firmware.bin as 1 or i6_firmware.bin as 6
@@ -44,6 +46,23 @@ CHUNK = 1024
 RECORD_SECONDS = 5
 
 p = pyaudio.PyAudio()
+
+baseUrl = '/Users/kehindeelelu/Library/CloudStorage/OneDrive-ClemsonUniversity/RESEARCH/09_September_2023/Code/SELD'
+
+current_datetime = datetime.now()
+formatted_datetime = current_datetime.strftime("%Y-%m-%d_%H-%M-%S")
+
+filename_audio = "split5_ID.wav"
+csv_file_path = f"{baseUrl}/output/meta_plot/{formatted_datetime}/"
+audio_file_path = f"{baseUrl}/output/audio/{formatted_datetime}/"
+WAVE_OUTPUT_FILENAME = f"{audio_file_path}/{filename_audio}"
+
+os.makedirs(csv_file_path) if not os.path.exists(
+    csv_file_path) else print(f"Folder '{csv_file_path}' already exists.")
+
+os.makedirs(audio_file_path) if not os.path.exists(
+    audio_file_path) else print(f"Folder '{audio_file_path}' already exists.")
+
 
 # Hyper-parameters
 ################# Model #################
@@ -373,9 +392,6 @@ def testaudio(args, data_generator, logging):
     if args.cuda:
         model.cuda()
 
-    filename_audio = "split5_ID1_1_vs_4.wav"
-
-    WAVE_OUTPUT_FILENAME = f"/Users/kehindeelelu/Documents/Research/SELD/output/{filename_audio}"
     audio_path = WAVE_OUTPUT_FILENAME
 
     stream = p.open(
@@ -411,9 +427,7 @@ def testaudio(args, data_generator, logging):
     audio, _ = librosa.load(audio_path, sr=fs, mono=False, dtype=np.float32)
 
     feature = transform(audio)
-
     mean, std = calculate_scalar(feature)
-
     batch_x = feature
     batch_x = batch_x[None, :, :, :]
     batch_x = transforms(batch_x, mean, std)
@@ -425,16 +439,21 @@ def testaudio(args, data_generator, logging):
     output['events'] = to_np(output['events'])
     output['doas'] = to_np(output['doas'])
 
-    # Specify the file path where you want to save the CSV file
-    csv_file_path = f"/Users/kehindeelelu/Documents/Research/SELD/output/"
+    # with open(f'{csv_file_path}/events.csv', 'w', newline='') as csv_file:
+    #     writer = csv.writer(csv_file)
+    #     writer.writerows((output['events'].squeeze().astype(np.float32)))
 
-    with open(f'{csv_file_path}/events.csv', 'w', newline='') as csv_file:
-        writer = csv.writer(csv_file)
-        writer.writerows((output['events'].squeeze().astype(np.float32)))
+    # with open(f'{csv_file_path}/doas.csv', 'w', newline='') as csv_file:
+    #     writer = csv.writer(csv_file)
+    #     writer.writerows((output['doas'].squeeze() * 180 / np.pi))
 
-    with open(f'{csv_file_path}/doas.csv', 'w', newline='') as csv_file:
-        writer = csv.writer(csv_file)
-        writer.writerows((output['doas'].squeeze() * 180 / np.pi))
+    output_dict = {
+        'filename': filename_audio,
+        'events': (output['events'] > threshold['sed']).squeeze().astype(np.float32),
+        'doas': output['doas'].squeeze()}
+    submit_dict = calculate_submission(
+        output_dict, frames_per_1s, sub_frames_per_1s)
+    write_submission(submit_dict, csv_file_path)
 
     logging.info('----------------------------------------------------------------------------------------------------------------------------------------------')
     logging.info('test sample audio')

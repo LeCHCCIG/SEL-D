@@ -7,11 +7,11 @@
 
 # Feature directory
 # FEATURE_DIR='/home/kelelu/Third_Paper/Codebase/SELD/dataset_root/feature/'
-FEATURE_DIR='/Users/kehindeelelu/Documents/Research/SELD/dataset_root/feature/'
+FEATURE_DIR='/Users/kehindeelelu/Library/CloudStorage/OneDrive-ClemsonUniversity/RESEARCH/09_September_2023/Code/SELD/dataset_root/feature/'
 
 # Workspace
 # WORKSPACE='/home/kelelu/Third_Paper/Codebase/SELD/'
-WORKSPACE='/Users/kehindeelelu/Documents/Research/SELD/'
+WORKSPACE='/Users/kehindeelelu/Library/CloudStorage/OneDrive-ClemsonUniversity/RESEARCH/09_September_2023/Code/SELD/'
 cd $WORKSPACE
 
 
