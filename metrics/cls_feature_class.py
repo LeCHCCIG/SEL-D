@@ -66,8 +66,8 @@ class FeatureClass:
                 'forklift': 6
             }
 
-        self._doa_resolution = 10
-        self._azi_list = range(-180, 180, self._doa_resolution)
+        self._doa_resolution = 5
+        self._azi_list = range(0, 360, self._doa_resolution)
         self._length = len(self._azi_list)
         self._ele_list = range(-40, 50, self._doa_resolution)
         self._height = len(self._ele_list)

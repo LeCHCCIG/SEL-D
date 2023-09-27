@@ -2,8 +2,7 @@
 
 # Data directory
 # DATASET_DIR='/home/kelelu/Third_Paper/Codebase/DCASE2019/dataset_root/'
-# DATASET_DIR='/home/kelelu/Third_Paper/third/seld-dcase2019/dataset/'
-
+DATASET_DIR='/Users/kehindeelelu/Library/CloudStorage/OneDrive-ClemsonUniversity/RESEARCH/09_September_2023/Code/SELD/data_prep/'
 
 # Feature directory
 # FEATURE_DIR='/home/kelelu/Third_Paper/Codebase/SELD/dataset_root/feature/'

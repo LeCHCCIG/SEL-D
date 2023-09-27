@@ -5,4 +5,5 @@ appendixes/
 runs/
 **/__pycache__/
 *.png
-**/.wav/
+*.wav
+*.csv
