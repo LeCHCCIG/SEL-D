@@ -218,8 +218,11 @@ class DataGenerator(object):
 
         Use the calculated scalar to transform data.
         """
+        np.seterr(invalid='ignore')
+        x = (x - self.mean) / self.std
+        x[np.isnan(x)] = 0
 
-        return (x - self.mean) / self.std
+        return x
 
     def generate_train(self):
         """Generate batch data for training.

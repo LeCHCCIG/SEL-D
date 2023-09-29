@@ -34,16 +34,17 @@ from evaluation import calculate_submission, write_submission
 
 import pyaudio
 import wave
+import h5py
 from datetime import datetime
 
-RESPEAKER_RATE = 16000
+RESPEAKER_RATE = 32000
 # change base on firmwares, default_firmware.bin as 1 or i6_firmware.bin as 6
 RESPEAKER_CHANNELS = 2
 RESPEAKER_WIDTH = 2
 # run getDeviceInfo.py to get index
-RESPEAKER_INDEX = 1  # refer to input device id
+RESPEAKER_INDEX = 3  # refer to input device id
 CHUNK = 1024
-RECORD_SECONDS = 5
+RECORD_SECONDS = 10
 
 p = pyaudio.PyAudio()
 
@@ -78,7 +79,7 @@ batch_size = 32
 Max_epochs = 50
 lr = 1e-3
 weight_decay = 0
-threshold = {'sed': 0.3}
+threshold = {'sed': 0.5}
 
 fs = 32000
 nfft = 1024
@@ -423,13 +424,20 @@ def testaudio(args, data_generator, logging):
     wf.writeframes(b''.join(frames))
     wf.close()
 
-    # audio_path = '/Users/kehindeelelu/Documents/Research/SELD/dataset_root/split5_ID1_1_vs_5.wav'
+    # audio_path = '/Users/kehindeelelu/Library/CloudStorage/OneDrive-ClemsonUniversity/RESEARCH/09_September_2023/Code/SELD/data_prep/foa_dev/split1_ID1_3_vs_5.wav'
     audio, _ = librosa.load(audio_path, sr=fs, mono=False, dtype=np.float32)
 
     feature = transform(audio)
-    mean, std = calculate_scalar(feature)
     batch_x = feature
     batch_x = batch_x[None, :, :, :]
+
+    # Scalar
+    scalar_path = 'dataset_root/feature/logmelgcc/32000fs_1024nfft_320hs_96melb/foa_scalar.h5'
+    with h5py.File(scalar_path, 'r') as hf_scalar:
+        mean = hf_scalar['mean'][:]
+        std = hf_scalar['std'][:]
+
+    # mean, std = calculate_scalar(feature)
     batch_x = transforms(batch_x, mean, std)
 
     batch_x = to_torch(batch_x, args.cuda)
@@ -439,13 +447,13 @@ def testaudio(args, data_generator, logging):
     output['events'] = to_np(output['events'])
     output['doas'] = to_np(output['doas'])
 
-    # with open(f'{csv_file_path}/events.csv', 'w', newline='') as csv_file:
-    #     writer = csv.writer(csv_file)
-    #     writer.writerows((output['events'].squeeze().astype(np.float32)))
+    with open(f'{csv_file_path}/events.csv', 'w', newline='') as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerows((output['events'].squeeze().astype(np.float32)))
 
-    # with open(f'{csv_file_path}/doas.csv', 'w', newline='') as csv_file:
-    #     writer = csv.writer(csv_file)
-    #     writer.writerows((output['doas'].squeeze() * 180 / np.pi))
+    with open(f'{csv_file_path}/doas.csv', 'w', newline='') as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerows((output['doas'].squeeze() * 180 / np.pi))
 
     output_dict = {
         'filename': filename_audio,
@@ -522,7 +530,7 @@ if __name__ == '__main__':
                                   choices=['sed_only', 'doa_only', 'two_staged_eval', 'seld'])
     parser_testaudio.add_argument('--fold', default=1, type=int,
                                   help='fold for cross validation, if -1, use full data')
-    parser_testaudio.add_argument('--iteration', default=4000, type=int,
+    parser_testaudio.add_argument('--iteration', default=9000, type=int,
                                   help='which iteration model to read')
     parser_testaudio.add_argument('--seed', default='42', type=int,
                                   help='random seed')
@@ -587,11 +595,15 @@ if __name__ == '__main__':
     submissions_dir = os.path.join(appendixes_dir, 'submissions')
     os.makedirs(submissions_dir, exist_ok=True)
 
+    # # pretrained path
+    # global pretrained_path
+    # pretrained_path = os.path.join(appendixes_dir, 'models_saved', 'sed_only',
+    #                                'model_' + Model_SED + '_{}'.format(args.audio_type) + '_fold_{}'.format(args.fold) +
+    #                                '_seed_{}'.format(args.seed), 'iter_4000.pth')
+
     # pretrained path
     global pretrained_path
-    pretrained_path = os.path.join(appendixes_dir, 'models_saved', 'sed_only',
-                                   'model_' + Model_SED + '_{}'.format(args.audio_type) + '_fold_{}'.format(args.fold) +
-                                   '_seed_{}'.format(args.seed), 'iter_4000.pth')
+    pretrained_path = '/Users/kehindeelelu/Library/CloudStorage/OneDrive-ClemsonUniversity/RESEARCH/09_September_2023/Code/SELD/appendixes/models_saved/doa_only/model_pretrained_CRNN10_foa_fold_3_seed_10/iter_9000.pth'
 
     '''
     2. Model

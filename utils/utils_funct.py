@@ -135,4 +135,16 @@ def transforms(x, mean, std):
     Use the calculated scalar to transform data.
     """
 
-    return (x - mean) / std
+    # np.seterr(invalid='ignore')
+    # x = (x - mean) / std
+    # x[np.isnan(x)] = 0
+
+    # Check for NaN values and replace them with zero
+    x[np.isnan(x)] = 0
+
+    # Check for zero standard deviation (avoid division by zero)
+    # Replace zeros with 1 to avoid division by zero
+    std_nonzero = np.where(std != 0, std, 1)
+    x = (x - mean) / std_nonzero
+
+    return x

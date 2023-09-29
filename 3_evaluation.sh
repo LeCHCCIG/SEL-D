@@ -22,7 +22,7 @@ SEED=10
 TASK_TYPE='doa_only'
 
 # which model to use
-ITERATION=4000
+ITERATION=9000
 
 # GPU number
 GPU_ID=0
@@ -45,5 +45,5 @@ GPU_ID=0
 
 #===============================================
 
-FOLD=4
+FOLD=3
 CUDA_VISIBLE_DEVICES=$GPU_ID python ${WORKSPACE}main.py testaudio --workspace=$WORKSPACE --feature_dir=$FEATURE_DIR --feature_type=$FEATURE_TYPE --audio_type=$AUDIO_TYPE --task_type=$TASK_TYPE --fold=$FOLD --iteration=$ITERATION --seed=$SEED

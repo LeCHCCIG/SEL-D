@@ -19,7 +19,7 @@ event_labels = ['crane', 'piledriver', 'saw', 'excavator',
 lb_to_ix = {lb: i for i, lb in enumerate(event_labels)}
 ix_to_lb = {i: lb for i, lb in enumerate(event_labels)}
 
-azimuths = range(-180, 171, 10)
+azimuths = range(0, 360, 5)
 elevations = range(-40, 41, 10)
 doa = [azimuths, elevations]
 doa_labels = list(itertools.product(*doa))

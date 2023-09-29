@@ -10,6 +10,7 @@ import joblib
 from IPython import embed
 import matplotlib.pyplot as plot
 import librosa
+import sys
 plot.switch_backend('agg')
 
 
@@ -79,17 +80,17 @@ class FeatureClass:
         # to be fixed.
 
         # For regression task only
-        self._default_azi = 180
+        self._default_azi = 370
         self._default_ele = 50
 
         if self._default_azi in self._azi_list:
             print('ERROR: chosen default_azi value {} should not exist in azi_list'.format(
                 self._default_azi))
-            exit()
+            sys.exit()
         if self._default_ele in self._ele_list:
             print('ERROR: chosen default_ele value {} should not exist in ele_list'.format(
                 self._default_ele))
-            exit()
+            sys.exit()
 
         self._max_frames = int(
             np.ceil(self._audio_max_len_samples / float(self._hop_len)))
