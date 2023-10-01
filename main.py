@@ -8,6 +8,7 @@ import sys
 from timeit import default_timer as timer
 
 import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -44,7 +45,7 @@ RESPEAKER_WIDTH = 2
 # run getDeviceInfo.py to get index
 RESPEAKER_INDEX = 2  # refer to input device id
 CHUNK = 1024
-RECORD_SECONDS = 2
+RECORD_SECONDS = 5
 
 p = pyaudio.PyAudio()
 
@@ -53,10 +54,10 @@ baseUrl = '/Users/kehindeelelu/Library/CloudStorage/OneDrive-ClemsonUniversity/R
 current_datetime = datetime.now()
 formatted_datetime = current_datetime.strftime("%Y-%m-%d_%H-%M-%S")
 
-filename_audio = "split5_ID.wav"
+filename_audio = "split5_ID"
 csv_file_path = f"{baseUrl}/output/meta_plot/{formatted_datetime}/"
 audio_file_path = f"{baseUrl}/output/audio/{formatted_datetime}/"
-WAVE_OUTPUT_FILENAME = f"{audio_file_path}/{filename_audio}"
+WAVE_OUTPUT_FILENAME = f"{audio_file_path}/{filename_audio}.wav"
 
 os.makedirs(csv_file_path) if not os.path.exists(
     csv_file_path) else print(f"Folder '{csv_file_path}' already exists.")
@@ -416,7 +417,7 @@ def testaudio(args, data_generator, logging):
     stream.close()
     p.terminate()
 
-    wf = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
+    wf = wave.open(audio_path, 'wb')
     wf.setnchannels(RESPEAKER_CHANNELS)
     wf.setsampwidth(p.get_sample_size(
         p.get_format_from_width(RESPEAKER_WIDTH)))
@@ -425,7 +426,7 @@ def testaudio(args, data_generator, logging):
     wf.close()
 
     sample_test = 'split3_ID9_5_vs_3'
-    audio_path = f'/Users/kehindeelelu/Library/CloudStorage/OneDrive-ClemsonUniversity/RESEARCH/09_September_2023/Code/SELD/data_prep/foa_dev/{sample_test}.wav'
+    # audio_path = f'/Users/kehindeelelu/Library/CloudStorage/OneDrive-ClemsonUniversity/RESEARCH/09_September_2023/Code/SELD/data_prep/foa_dev/{sample_test}.wav'
     audio, _ = librosa.load(audio_path, sr=fs, mono=False, dtype=np.float32)
 
     feature = transform(audio)
@@ -458,13 +459,35 @@ def testaudio(args, data_generator, logging):
         writer = csv.writer(csv_file)
         writer.writerows((output['doas'].squeeze() * 180 / np.pi))
 
-    # output_dict = {
-    #     'filename': filename_audio,
-    #     'events': (output['events'] > threshold['sed']).squeeze().astype(np.float32),
-    #     'doas': output['doas'].squeeze()}
-    # submit_dict = calculate_submission(
-    #     output_dict, frames_per_1s, sub_frames_per_1s)
-    # write_submission(submit_dict, csv_file_path)
+    # Replace 'your_file.csv' with the path to your CSV file
+    csv_file_event = '/Users/kehindeelelu/Library/CloudStorage/OneDrive-ClemsonUniversity/RESEARCH/09_September_2023/Code/SELD/output/output_event/2023-10-01_15-13-21/split3_ID1_3_vs_5_event_.csv'
+    df = pd.read_csv(csv_file_event)
+    output['events'] = df.to_numpy()
+
+    print(output['events'].shape, output['doas'].shape)
+
+    # Sample shapes
+    event_shape = output['events'].shape
+    doa_shape = output['doas'].shape
+
+    # Calculate how many times the original array needs to be repeated
+    repeat_factor = int(np.ceil(doa_shape[1] / event_shape[0]))
+
+    # Repeat the original array to fill the new array
+    new_event_array = np.tile(np.random.rand(*event_shape), (repeat_factor, 1))
+
+    print(new_event_array.shape)
+
+    # Trim the new array to the desired size
+    output['events'] = new_event_array[:doa_shape[0], :]
+
+    print(output['events'].shape, output['doas'].shape)
+
+    output_dict = {
+        'filename': filename_audio,
+        'events': (output['events'] > threshold['sed']).squeeze().astype(np.float32),
+        'doas': output['doas'].squeeze()}
+    write_submission(output_dict, csv_file_path)
 
     logging.info('----------------------------------------------------------------------------------------------------------------------------------------------')
     logging.info('test sample audio')
