@@ -37,14 +37,14 @@ import wave
 import h5py
 from datetime import datetime
 
-RESPEAKER_RATE = 32000
+RESPEAKER_RATE = 16000
 # change base on firmwares, default_firmware.bin as 1 or i6_firmware.bin as 6
 RESPEAKER_CHANNELS = 2
 RESPEAKER_WIDTH = 2
 # run getDeviceInfo.py to get index
-RESPEAKER_INDEX = 3  # refer to input device id
+RESPEAKER_INDEX = 2  # refer to input device id
 CHUNK = 1024
-RECORD_SECONDS = 10
+RECORD_SECONDS = 2
 
 p = pyaudio.PyAudio()
 
@@ -208,7 +208,7 @@ def train(args, data_generator, model, optimizer, logging):
         # Train
         ###############
         # Reduce learning rate
-        if batch_idx % lr_interval == 0 and batch_idx > 4000:
+        if batch_idx % lr_interval == 0 and batch_idx > 1000:
             for param_group in optimizer.param_groups:
                 param_group['lr'] *= 0.9
 
@@ -424,7 +424,8 @@ def testaudio(args, data_generator, logging):
     wf.writeframes(b''.join(frames))
     wf.close()
 
-    # audio_path = '/Users/kehindeelelu/Library/CloudStorage/OneDrive-ClemsonUniversity/RESEARCH/09_September_2023/Code/SELD/data_prep/foa_dev/split1_ID1_3_vs_5.wav'
+    sample_test = 'split3_ID9_5_vs_3'
+    audio_path = f'/Users/kehindeelelu/Library/CloudStorage/OneDrive-ClemsonUniversity/RESEARCH/09_September_2023/Code/SELD/data_prep/foa_dev/{sample_test}.wav'
     audio, _ = librosa.load(audio_path, sr=fs, mono=False, dtype=np.float32)
 
     feature = transform(audio)
@@ -437,8 +438,10 @@ def testaudio(args, data_generator, logging):
         mean = hf_scalar['mean'][:]
         std = hf_scalar['std'][:]
 
-    # mean, std = calculate_scalar(feature)
+    mean, std = calculate_scalar(feature)
     batch_x = transforms(batch_x, mean, std)
+
+    print(batch_x.shape)
 
     batch_x = to_torch(batch_x, args.cuda)
     with torch.no_grad():
@@ -447,21 +450,21 @@ def testaudio(args, data_generator, logging):
     output['events'] = to_np(output['events'])
     output['doas'] = to_np(output['doas'])
 
-    with open(f'{csv_file_path}/events.csv', 'w', newline='') as csv_file:
+    with open(f'{csv_file_path}/{sample_test}_events.csv', 'w', newline='') as csv_file:
         writer = csv.writer(csv_file)
         writer.writerows((output['events'].squeeze().astype(np.float32)))
 
-    with open(f'{csv_file_path}/doas.csv', 'w', newline='') as csv_file:
+    with open(f'{csv_file_path}/{sample_test}_doas.csv', 'w', newline='') as csv_file:
         writer = csv.writer(csv_file)
         writer.writerows((output['doas'].squeeze() * 180 / np.pi))
 
-    output_dict = {
-        'filename': filename_audio,
-        'events': (output['events'] > threshold['sed']).squeeze().astype(np.float32),
-        'doas': output['doas'].squeeze()}
-    submit_dict = calculate_submission(
-        output_dict, frames_per_1s, sub_frames_per_1s)
-    write_submission(submit_dict, csv_file_path)
+    # output_dict = {
+    #     'filename': filename_audio,
+    #     'events': (output['events'] > threshold['sed']).squeeze().astype(np.float32),
+    #     'doas': output['doas'].squeeze()}
+    # submit_dict = calculate_submission(
+    #     output_dict, frames_per_1s, sub_frames_per_1s)
+    # write_submission(submit_dict, csv_file_path)
 
     logging.info('----------------------------------------------------------------------------------------------------------------------------------------------')
     logging.info('test sample audio')

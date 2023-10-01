@@ -3,10 +3,10 @@ import wave
 
 RESPEAKER_RATE = 16000
 # change base on firmwares, default_firmware.bin as 1 or i6_firmware.bin as 6
-RESPEAKER_CHANNELS = 2
+RESPEAKER_CHANNELS = 1
 RESPEAKER_WIDTH = 2
 # run getDeviceInfo.py to get index
-RESPEAKER_INDEX = 2  # refer to input device id
+RESPEAKER_INDEX = 4  # refer to input device id
 CHUNK = 1024
 RECORD_SECONDS = 5
 WAVE_OUTPUT_FILENAME = "output.wav"
