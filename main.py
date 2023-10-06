@@ -43,9 +43,9 @@ RESPEAKER_RATE = 16000
 RESPEAKER_CHANNELS = 2
 RESPEAKER_WIDTH = 2
 # run getDeviceInfo.py to get index
-RESPEAKER_INDEX = 2  # refer to input device id
+RESPEAKER_INDEX = 1  # refer to input device id
 CHUNK = 1024
-RECORD_SECONDS = 5
+RECORD_SECONDS = 60
 
 p = pyaudio.PyAudio()
 
@@ -429,6 +429,21 @@ def testaudio(args, data_generator, logging):
     # audio_path = f'/Users/kehindeelelu/Library/CloudStorage/OneDrive-ClemsonUniversity/RESEARCH/09_September_2023/Code/SELD/data_prep/foa_dev/{sample_test}.wav'
     audio, _ = librosa.load(audio_path, sr=fs, mono=False, dtype=np.float32)
 
+    frame_num = audio.shape[1]
+    pointer = 0
+
+    if frame_num > chunklen:
+        train_index = np.arange(
+            pointer, pointer+frame_num-chunklen+1, hopframes).tolist()
+        if (frame_num - chunklen) % hopframes != 0:
+            train_index.append(pointer+frame_num-chunklen)
+            print('here')
+    elif frame_num < chunklen:
+        feature = np.concatenate(
+            (feature,
+                -100*np.ones((feature.shape[0], chunklen-frame_num, feature.shape[-1]))), axis=1)
+        print('there')
+
     feature = transform(audio)
     batch_x = feature
     batch_x = batch_x[None, :, :, :]
@@ -459,35 +474,11 @@ def testaudio(args, data_generator, logging):
         writer = csv.writer(csv_file)
         writer.writerows((output['doas'].squeeze() * 180 / np.pi))
 
-    # Replace 'your_file.csv' with the path to your CSV file
-    csv_file_event = '/Users/kehindeelelu/Library/CloudStorage/OneDrive-ClemsonUniversity/RESEARCH/09_September_2023/Code/SELD/output/output_event/2023-10-01_15-13-21/split3_ID1_3_vs_5_event_.csv'
-    df = pd.read_csv(csv_file_event)
-    output['events'] = df.to_numpy()
-
-    print(output['events'].shape, output['doas'].shape)
-
-    # Sample shapes
-    event_shape = output['events'].shape
-    doa_shape = output['doas'].shape
-
-    # Calculate how many times the original array needs to be repeated
-    repeat_factor = int(np.ceil(doa_shape[1] / event_shape[0]))
-
-    # Repeat the original array to fill the new array
-    new_event_array = np.tile(np.random.rand(*event_shape), (repeat_factor, 1))
-
-    print(new_event_array.shape)
-
-    # Trim the new array to the desired size
-    output['events'] = new_event_array[:doa_shape[0], :]
-
-    print(output['events'].shape, output['doas'].shape)
-
-    output_dict = {
-        'filename': filename_audio,
-        'events': (output['events'] > threshold['sed']).squeeze().astype(np.float32),
-        'doas': output['doas'].squeeze()}
-    write_submission(output_dict, csv_file_path)
+    # output_dict = {
+    #     'filename': filename_audio,
+    #     'events': (output['events'] > threshold['sed']).squeeze().astype(np.float32),
+    #     'doas': output['doas'].squeeze()}
+    # write_submission(output_dict, csv_file_path)
 
     logging.info('----------------------------------------------------------------------------------------------------------------------------------------------')
     logging.info('test sample audio')
