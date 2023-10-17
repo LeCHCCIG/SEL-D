@@ -43,9 +43,9 @@ RESPEAKER_RATE = 16000
 RESPEAKER_CHANNELS = 2
 RESPEAKER_WIDTH = 2
 # run getDeviceInfo.py to get index
-RESPEAKER_INDEX = 1  # refer to input device id
+RESPEAKER_INDEX = 2  # refer to input device id
 CHUNK = 1024
-RECORD_SECONDS = 60
+RECORD_SECONDS = 61
 
 p = pyaudio.PyAudio()
 
@@ -53,10 +53,10 @@ baseUrl = '/Users/kehindeelelu/Library/CloudStorage/OneDrive-ClemsonUniversity/R
 
 current_datetime = datetime.now()
 formatted_datetime = current_datetime.strftime("%Y-%m-%d_%H-%M-%S")
-
+controlexperiment_ID = 25
 filename_audio = "split5_ID"
-csv_file_path = f"{baseUrl}/output/meta_plot/{formatted_datetime}/"
-audio_file_path = f"{baseUrl}/output/audio/{formatted_datetime}/"
+csv_file_path = f"{baseUrl}/output/meta_plot/{formatted_datetime}_{controlexperiment_ID}/"
+audio_file_path = f"{baseUrl}/output/audio/{formatted_datetime}_{controlexperiment_ID}/"
 WAVE_OUTPUT_FILENAME = f"{audio_file_path}/{filename_audio}.wav"
 
 os.makedirs(csv_file_path) if not os.path.exists(
@@ -375,7 +375,7 @@ def inference_all_fold(args):
     print('----------------------------------------------------------------------------------------------------------------------------------------------')
 
 
-def testaudio(args, data_generator, logging):
+def testaudio(args, logging):
 
     # Load model for doa using sed pred
     print('\n===> Testing live audio file')
@@ -482,6 +482,7 @@ def testaudio(args, data_generator, logging):
 
     logging.info('----------------------------------------------------------------------------------------------------------------------------------------------')
     logging.info('test sample audio')
+    logging.info(f'{formatted_datetime}_{controlexperiment_ID}')
     logging.info('----------------------------------------------------------------------------------------------------------------------------------------------')
 
 
@@ -672,20 +673,22 @@ if __name__ == '__main__':
     '''
     hdf5_dir = os.path.join(args.feature_dir, args.feature_type,
                             hdf5_folder_name, args.audio_type)
-    data_generator = DataGenerator(
-        args=args,
-        hdf5_dir=hdf5_dir,
-        logging=logging
-    )
+    # data_generator = DataGenerator(
+    #     args=args,
+    #     hdf5_dir=hdf5_dir,
+    #     logging=logging
+    # )
 
-    '''
-    4. Train, test and evaluation
-    '''
-    if args.mode == 'train':
-        train(args, data_generator, model, optimizer, logging)
-    elif args.mode == 'inference':
-        inference(args, data_generator, logging)
-    elif args.mode == "testaudio":
-        testaudio(args, data_generator, logging)
-    else:
-        raise Exception('Error!')
+    testaudio(args, logging)
+
+    # '''
+    # 4. Train, test and evaluation
+    # '''
+    # if args.mode == 'train':
+    #     train(args, data_generator, model, optimizer, logging)
+    # elif args.mode == 'inference':
+    #     inference(args, data_generator, logging)
+    # elif args.mode == "testaudio":
+    #     testaudio(args, data_generator, logging)
+    # else:
+    #     raise Exception('Error!')
